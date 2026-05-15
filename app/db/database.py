@@ -9,23 +9,6 @@ from app.core.config import get_settings
 
 settings = get_settings()
 
-print("DATABASE_URL =", settings.DATABASE_URL)
-
-
-print("\n==============================")
-print("DATABASE URL RAW")
-print(settings.DATABASE_URL)
-
-url = make_url(settings.DATABASE_URL)
-
-print("\nPARSED URL")
-print(url)
-
-print("\nQUERY PARAMS")
-print(url.query)
-
-print("==============================\n")
-
 engine = create_engine(
     settings.DATABASE_URL,
     pool_pre_ping=True,
