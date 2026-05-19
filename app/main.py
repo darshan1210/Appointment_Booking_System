@@ -6,8 +6,9 @@ from sqlalchemy import text               # <-- new import
 import time
 
 from app.core.config import get_settings
-from app.db.database import engine, supabase  # Base no longer needed
+from app.db.database import engine, Base   # Base no longer needed
 from app.core.logging import Logger
+from app.api.v1.api import api_router
 from app.middleware.security_middleware import SecurityHeadersMiddleware
 
 settings = get_settings()
@@ -15,6 +16,8 @@ settings = get_settings()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan events."""
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
     Logger.info("🚀 Starting up Project...")
     Logger.info("✅ Application started (no table creation)")
     yield
@@ -26,14 +29,20 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+
 app.add_middleware(SecurityHeadersMiddleware)
 # ... (keep your CORS, exception handlers, etc. unchanged)
 
+
+app.include_router(api_router, prefix=settings.API_V1_STR)
+
+
+
 @app.get("/health", tags=["Health"])
-def health_check():
+async def health_check():
     try:
-        with engine.connect() as conn:
-            conn.execute(text("SELECT 1"))
+        async with engine.connect() as conn:
+            await conn.execute(text("SELECT 1"))
 
         return {
             "status": "healthy",
@@ -52,6 +61,7 @@ def health_check():
                 "timestamp": time.time(),
             },
         )
+
 
 if __name__ == "__main__":
     import uvicorn
