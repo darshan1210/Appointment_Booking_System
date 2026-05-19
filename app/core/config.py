@@ -14,6 +14,9 @@ class Settings(BaseSettings):
     DATABASE_URL: str
     SUPABASE_URL: str
     SUPABASE_KEY: str
+    REDIS_URL: str
+    CELERY_BROKER_URL: str
+    CELERY_RESULT_BACKEND: str
     
     JWT_SECRET_KEY :str
     JWT_ALGO :str
