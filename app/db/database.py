@@ -1,7 +1,11 @@
 # app/db/database.py
 
-from sqlalchemy import create_engine
+from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy.ext.asyncio import (
+    AsyncSession,
+    async_sessionmaker
+)
 from supabase import create_client, Client
 from sqlalchemy.engine.url import make_url
 
@@ -9,9 +13,13 @@ from app.core.config import get_settings
 
 settings = get_settings()
 
-engine = create_engine(
+engine = create_async_engine(
     settings.DATABASE_URL,
     pool_pre_ping=True,
+    echo=settings.DEBUG,
+     connect_args={
+        "statement_cache_size": 0
+    }
 )
 
 supabase: Client = create_client(
@@ -19,17 +27,15 @@ supabase: Client = create_client(
     settings.SUPABASE_KEY
 )
 
-SessionLocal = sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=engine
+SessionLocal = async_sessionmaker(
+     bind=engine,
+    class_=AsyncSession,
+    expire_on_commit=False,
+    autoflush=False
 )
 
 Base = declarative_base()
 
-def get_db():
-    db = SessionLocal()
-    try:
+async def get_db():
+    async with SessionLocal() as db:
         yield db
-    finally:
-        db.close()
